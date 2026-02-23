@@ -71,6 +71,10 @@ export type MatrixMonitorHandlerParams = {
   accountId?: string | null;
 };
 
+function encodeSessionSegment(value: string): string {
+  return encodeURIComponent(value).replace(/%/g, "_");
+}
+
 export function createMatrixRoomMessageHandler(params: MatrixMonitorHandlerParams) {
   const {
     client,
@@ -444,11 +448,19 @@ export function createMatrixRoomMessageHandler(params: MatrixMonitorHandlerParam
         },
       });
 
+      // Some routing configs resolve Matrix traffic to the protected main session
+      // (agent:<agent>:main). For room/DM conversations we want a conversation-scoped
+      // session key so they can be retired independently.
+      const mainSessionPattern = new RegExp(`^agent:${baseRoute.agentId}:main$`);
+      const derivedMatrixSessionBase = mainSessionPattern.test(baseRoute.sessionKey)
+        ? `agent:${baseRoute.agentId}:matrix:${isDirectMessage ? "dm" : "room"}:${encodeSessionSegment(roomId)}`
+        : baseRoute.sessionKey;
+
       const route = {
         ...baseRoute,
         sessionKey: threadRootId
-          ? `${baseRoute.sessionKey}:thread:${threadRootId}`
-          : baseRoute.sessionKey,
+          ? `${derivedMatrixSessionBase}:thread:${encodeSessionSegment(threadRootId)}`
+          : derivedMatrixSessionBase,
       };
 
       let threadStarterBody: string | undefined;

@@ -129,6 +129,7 @@ This plugin diverges from the official OpenClaw Matrix plugin in the following w
 2. **Session management**: Matrix sessions are scoped independently from agent sessions
 3. **Media upload**: Full media/local file upload support with configurable directory allowlists
 4. **Account resolution**: Automatic account resolution based on gateway clientName
+5. **React to last message**: The `react` tool can react to the last message in a conversation without requiring the message ID explicitly
 
 ## Installation
 
@@ -180,10 +181,26 @@ To test that media upload works:
    - "Local media file not found" - The file doesn't exist at that path
    - "M_FORBIDDEN: User @X not in room" - The account being used isn't in the room
 
+## React to Last Message
+
+The `react` tool now supports reacting to the last message in a conversation without explicitly specifying the message ID:
+
+**Before (required messageId):**
+```
+react to message <messageId> with 😍
+```
+
+**Now (optional messageId - defaults to last message):**
+```
+react with 😍
+```
+
+If no `messageId` is provided, the tool will automatically read the last message from the conversation and react to it. This makes it much easier for agents to react to messages without needing to know the specific event ID.
+
 ## Security Considerations
 
 ### Path Allowlisting
-The `mediaLocalRoots allowlist approach -` feature uses an only files in explicitly configured directories can be uploaded. This prevents arbitrary file access.
+The `mediaLocalRoots` feature uses an allowlist approach - only files in explicitly configured directories can be uploaded. This prevents arbitrary file access.
 
 ### Default Restrictions
 If no `mediaLocalRoots` is configured, the system defaults to restrictive OpenClaw-managed directories:

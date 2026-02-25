@@ -79,13 +79,19 @@ export async function handleMatrixAction(
           allowEmpty: true,
         });
         const mediaUrl = readStringParam(params, "mediaUrl");
+        const mediaLocalRoots = readStringParam(params, "mediaLocalRoots")
+          ? (JSON.parse(readStringParam(params, "mediaLocalRoots")!) as string[])
+          : undefined;
         const replyToId =
           readStringParam(params, "replyToId") ?? readStringParam(params, "replyTo");
         const threadId = readStringParam(params, "threadId");
+        const accountId = readStringParam(params, "accountId");
         const result = await sendMatrixMessage(to, content, {
           mediaUrl: mediaUrl ?? undefined,
+          mediaLocalRoots: mediaLocalRoots ?? undefined,
           replyToId: replyToId ?? undefined,
           threadId: threadId ?? undefined,
+          accountId: accountId ?? undefined,
         });
         return jsonResult({ ok: true, result });
       }

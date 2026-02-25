@@ -1,5 +1,58 @@
 # Changelog
 
+## 2026.2.14
+
+### Features
+
+- **Media/Image Upload Support**: Added support for uploading images and media files to Matrix conversations (DMs and rooms).
+
+#### Implementation Details
+
+1. **mediaLocalRoots Configuration**: Added `mediaLocalRoots` config option to allow specifying additional directories from which media files can be uploaded.
+
+   ```json
+   {
+     "channels": {
+       "matrix": {
+         "mediaLocalRoots": ["/home/en/Downloads", "/tmp"]
+       }
+     }
+   }
+   ```
+
+   Or per-account:
+   ```json
+   {
+     "channels": {
+       "matrix": {
+         "accounts": {
+           "eisheth": {
+             "mediaLocalRoots": ["/home/en/Downloads"]
+           }
+         }
+       }
+     }
+   }
+   ```
+
+2. **Default Allowed Directories**: If not configured, the following directories are allowed by default:
+   - `/home/en/.openclaw/workspace`
+   - `/home/en/.openclaw/agents/{agentId}/workspace`
+   - `/home/en/.openclaw/media`
+   - `/home/en/.openclaw/sandboxes`
+   - System temp directory
+
+3. **Account-based Media Resolution**: The plugin now correctly resolves the correct Matrix account for each agent. It first checks for explicit accountId in the request, then falls back to matching the gateway clientName (agent name) to the configured accounts.
+
+#### Technical Changes
+
+- Added `mediaLocalRoots` to `MatrixConfigSchema` in `config-schema.ts`
+- Added `resolveMediaLocalRoots()` function in `send/client.ts` to read config
+- Updated `send.ts` to pass `localRoots` to `loadWebMedia()`
+- Updated `extractToolSend` in `actions.ts` to extract `accountId` from tool args
+- Updated `handleAction` in `actions.ts` to resolve accountId from gateway clientName when not provided
+- Updated `tool-actions.ts` and `actions/messages.ts` to pass `accountId` through the chain
+
 ## 2026.2.13
 
 ### Changes

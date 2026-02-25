@@ -53,6 +53,7 @@ export const MatrixConfigSchema = z.object({
   chunkMode: z.enum(["length", "newline"]).optional(),
   responsePrefix: z.string().optional(),
   mediaMaxMb: z.number().optional(),
+  mediaLocalRoots: z.array(z.string()).optional(),
   autoJoin: z.enum(["always", "allowlist", "off"]).optional(),
   autoJoinAllowlist: z.array(allowFromEntry).optional(),
   groupAllowFrom: z.array(allowFromEntry).optional(),

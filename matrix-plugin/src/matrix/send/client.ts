@@ -53,6 +53,21 @@ export function resolveMediaMaxBytes(accountId?: string): number | undefined {
   return undefined;
 }
 
+export function resolveMediaLocalRoots(accountId?: string): readonly string[] | undefined {
+  const cfg = getCore().config.loadConfig() as CoreConfig;
+  const accountConfig = findAccountConfig(
+    cfg.channels?.matrix?.accounts as Record<string, unknown> | undefined,
+    accountId ?? "",
+  );
+  if (Array.isArray(accountConfig?.mediaLocalRoots) && accountConfig.mediaLocalRoots.length > 0) {
+    return accountConfig.mediaLocalRoots as string[];
+  }
+  if (Array.isArray(cfg.channels?.matrix?.mediaLocalRoots) && cfg.channels.matrix.mediaLocalRoots.length > 0) {
+    return cfg.channels.matrix.mediaLocalRoots as string[];
+  }
+  return undefined;
+}
+
 export async function resolveMatrixClient(opts: {
   client?: MatrixClient;
   timeoutMs?: number;

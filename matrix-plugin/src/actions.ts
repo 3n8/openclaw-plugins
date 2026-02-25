@@ -1,5 +1,6 @@
 import {
   createActionGate,
+  normalizeAccountId,
   readNumberParam,
   readStringParam,
   type ChannelMessageActionAdapter,
@@ -51,10 +52,29 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     if (!to) {
       return null;
     }
-    return { to };
+    const accountId = typeof args.accountId === "string" ? args.accountId.trim() : undefined;
+    return { to, accountId };
   },
   handleAction: async (ctx: ChannelMessageActionContext) => {
-    const { action, params, cfg } = ctx;
+    const { action, params, cfg, accountId, gateway } = ctx;
+    
+    const effectiveAccountId = () => {
+      if (accountId) return accountId;
+      if (gateway?.clientName) {
+        const clientName = gateway.clientName.toLowerCase();
+        const accounts = (cfg as CoreConfig).channels?.matrix?.accounts;
+        if (accounts && typeof accounts === 'object') {
+          const normalized = normalizeAccountId(clientName);
+          for (const key of Object.keys(accounts)) {
+            if (normalizeAccountId(key) === normalized) {
+              return key;
+            }
+          }
+        }
+      }
+      return undefined;
+    };
+    
     const resolveRoomId = () =>
       readStringParam(params, "roomId") ??
       readStringParam(params, "channelId") ??
@@ -67,16 +87,20 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
         allowEmpty: true,
       });
       const mediaUrl = readStringParam(params, "media", { trim: false });
+      const mediaLocalRoots = ctx.mediaLocalRoots;
       const replyTo = readStringParam(params, "replyTo");
       const threadId = readStringParam(params, "threadId");
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "sendMessage",
           to,
           content,
           mediaUrl: mediaUrl ?? undefined,
+          mediaLocalRoots: mediaLocalRoots ? JSON.stringify(mediaLocalRoots) : undefined,
           replyToId: replyTo ?? undefined,
           threadId: threadId ?? undefined,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );

@@ -43,10 +43,10 @@ Added `mediaLocalRoots` config option to allow specifying additional directories
 {
   "channels": {
     "matrix": {
-      "mediaLocalRoots": ["/home/en/Downloads", "/tmp"]
+      "mediaLocalRoots": ["/home/nobody/Downloads", "/tmp"]
     }
   }
-}
+ }
 ```
 
 Or per-account:
@@ -56,7 +56,7 @@ Or per-account:
     "matrix": {
       "accounts": {
         "eisheth": {
-          "mediaLocalRoots": ["/home/en/Downloads"]
+          "mediaLocalRoots": ["/home/nobody/Downloads"]
         }
       }
     }
@@ -66,10 +66,10 @@ Or per-account:
 
 **Default Allowed Directories:**
 If not configured, the following directories are allowed by default:
-- `/home/en/.openclaw/workspace`
-- `/home/en/.openclaw/agents/{agentId}/workspace`
-- `/home/en/.openclaw/media`
-- `/home/en/.openclaw/sandboxes`
+- `/home/nobody/.openclaw/workspace`
+- `/home/nobody/.openclaw/agents/{agentId}/workspace`
+- `/home/nobody/.openclaw/media`
+- `/home/nobody/.openclaw/sandboxes`
 - System temp directory
 
 #### Implementation Details
@@ -147,17 +147,17 @@ This plugin is installed as a local extension in OpenClaw:
   "channels": {
     "matrix": {
       "enabled": true,
-      "mediaLocalRoots": ["/home/en/Downloads"],
+      "mediaLocalRoots": ["/home/nobody/Downloads"],
       "accounts": {
         "eisheth": {
           "name": "Eisheth",
-          "homeserver": "https://matrix.nettsi.de",
+          "homeserver": "https://matrix.org",
           "accessToken": "syt_...",
-          "mediaLocalRoots": ["/home/en/.openclaw/agents/eisheth/workspace"]
+          "mediaLocalRoots": ["/home/nobody/.openclaw/agents/eisheth/workspace"]
         },
         "raven": {
           "name": "Raven", 
-          "homeserver": "https://matrix.nettsi.de",
+          "homeserver": "https://matrix.org",
           "accessToken": "syt_..."
         }
       }
@@ -172,10 +172,33 @@ To test that media upload works:
 
 1. Ensure the agent has access to files in allowed directories
 2. The agent should reference files using full paths, e.g.:
-   - `/home/en/.openclaw/agents/eisheth/workspace/image.png`
+   - `/home/nobody/.openclaw/agents/eisheth/workspace/image.png`
    - Or files in any configured `mediaLocalRoots` directory
 
 3. If you see errors like:
    - "Local media path is not under an allowed directory" - The path is not in an allowed directory
    - "Local media file not found" - The file doesn't exist at that path
    - "M_FORBIDDEN: User @X not in room" - The account being used isn't in the room
+
+## Security Considerations
+
+### Path Allowlisting
+The `mediaLocalRoots allowlist approach -` feature uses an only files in explicitly configured directories can be uploaded. This prevents arbitrary file access.
+
+### Default Restrictions
+If no `mediaLocalRoots` is configured, the system defaults to restrictive OpenClaw-managed directories:
+- `/home/nobody/.openclaw/workspace` - Shared workspace
+- `/home/nobody/.openclaw/agents/{agentId}/workspace` - Agent-specific workspace
+- `/home/nobody/.openclaw/media` - Dedicated media directory
+- `/home/nobody/.open` - Isolclaw/sandboxesated sandboxes
+- System temp directory
+
+### Recommendations
+
+1. **Avoid exposing sensitive directories** - Don't add paths like `/home/nobody`, `/`, or `/etc` to `mediaLocalRoots`
+
+2. **Use per-account restrictions** - Configure `mediaLocalRoots` at the account level to limit each agent's access
+
+3. **Consider removing `/tmp` exposure** - The system temp directory is included in defaults; consider explicitly setting `mediaLocalRoots` without `/tmp` if not needed
+
+4. **Validate configuration** - Ensure all paths in `mediaLocalRoots` are absolute paths starting with `/`

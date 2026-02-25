@@ -107,14 +107,14 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     }
 
     if (action === "react") {
-      const messageId = readStringParam(params, "messageId", { required: true });
+      const messageId = readStringParam(params, "messageId", { required: false });
       const emoji = readStringParam(params, "emoji", { allowEmpty: true });
       const remove = typeof params.remove === "boolean" ? params.remove : undefined;
       return await handleMatrixAction(
         {
           action: "react",
           roomId: resolveRoomId(),
-          messageId,
+          messageId: messageId ?? undefined,
           emoji,
           remove,
         },
@@ -123,13 +123,13 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     }
 
     if (action === "reactions") {
-      const messageId = readStringParam(params, "messageId", { required: true });
+      const messageId = readStringParam(params, "messageId", { required: false });
       const limit = readNumberParam(params, "limit", { integer: true });
       return await handleMatrixAction(
         {
           action: "reactions",
           roomId: resolveRoomId(),
-          messageId,
+          messageId: messageId ?? undefined,
           limit,
         },
         cfg as CoreConfig,

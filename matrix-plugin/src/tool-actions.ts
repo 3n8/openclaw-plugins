@@ -49,21 +49,32 @@ export async function handleMatrixAction(
       throw new Error("Matrix reactions are disabled.");
     }
     const roomId = readRoomId(params);
-    const messageId = readStringParam(params, "messageId", { required: true });
+    let messageId = readStringParam(params, "messageId", { required: false });
+    
+    if (!messageId && action === "react") {
+      const messages = await readMatrixMessages(roomId, 1, cfg as CoreConfig);
+      if (messages && messages.length > 0) {
+        messageId = messages[0].eventId;
+      }
+      if (!messageId) {
+        throw new Error("Could not find a message to react to. Please provide a messageId.");
+      }
+    }
+    
     if (action === "react") {
       const { emoji, remove, isEmpty } = readReactionParams(params, {
         removeErrorMessage: "Emoji is required to remove a Matrix reaction.",
       });
       if (remove || isEmpty) {
-        const result = await removeMatrixReactions(roomId, messageId, {
+        const result = await removeMatrixReactions(roomId, messageId!, {
           emoji: remove ? emoji : undefined,
         });
         return jsonResult({ ok: true, removed: result.removed });
       }
-      await reactMatrixMessage(roomId, messageId, emoji);
+      await reactMatrixMessage(roomId, messageId!, emoji);
       return jsonResult({ ok: true, added: emoji });
     }
-    const reactions = await listMatrixReactions(roomId, messageId);
+    const reactions = await listMatrixReactions(roomId, messageId!);
     return jsonResult({ ok: true, reactions });
   }
 

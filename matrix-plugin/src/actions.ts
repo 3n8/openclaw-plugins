@@ -58,20 +58,37 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
   handleAction: async (ctx: ChannelMessageActionContext) => {
     const { action, params, cfg, accountId, gateway } = ctx;
     
+    console.log("[MATRIX-DEBUG] handleAction called:", { 
+      action, 
+      ctxAccountId: accountId, 
+      gatewayClientName: gateway?.clientName,
+      accountKeys: Object.keys((cfg as CoreConfig).channels?.matrix?.accounts || {})
+    });
+    
     const effectiveAccountId = () => {
-      if (accountId) return accountId;
+      if (accountId) {
+        console.log("[MATRIX-DEBUG] effectiveAccountId returning ctx.accountId:", accountId);
+        return accountId;
+      }
       if (gateway?.clientName) {
         const clientName = gateway.clientName.toLowerCase();
+        console.log("[MATRIX-DEBUG] effectiveAccountId trying clientName:", clientName);
         const accounts = (cfg as CoreConfig).channels?.matrix?.accounts;
         if (accounts && typeof accounts === 'object') {
           const normalized = normalizeAccountId(clientName);
+          console.log("[MATRIX-DEBUG] normalized clientName:", normalized);
+          console.log("[MATRIX-DEBUG] account keys:", Object.keys(accounts));
           for (const key of Object.keys(accounts)) {
-            if (normalizeAccountId(key) === normalized) {
+            const normalizedKey = normalizeAccountId(key);
+            console.log("[MATRIX-DEBUG] comparing:", normalizedKey, "==", normalized, "=", normalizedKey === normalized);
+            if (normalizedKey === normalized) {
+              console.log("[MATRIX-DEBUG] effectiveAccountId returning matched key:", key);
               return key;
             }
           }
         }
       }
+      console.log("[MATRIX-DEBUG] effectiveAccountId returning undefined");
       return undefined;
     };
     
@@ -109,14 +126,16 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     if (action === "react") {
       const messageId = readStringParam(params, "messageId", { required: false });
       const emoji = readStringParam(params, "emoji", { allowEmpty: true });
+      const emojis = readStringParam(params, "emojis", { allowEmpty: true });
       const remove = typeof params.remove === "boolean" ? params.remove : undefined;
       const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "react",
           roomId: resolveRoomId(),
-          messageId: messageId ?? undefined,
+          target: messageId ?? undefined,
           emoji,
+          emojis,
           remove,
           accountId: resolvedAccountId,
         },

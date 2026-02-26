@@ -50,12 +50,34 @@ export async function handleMatrixAction(
     }
     const roomId = readRoomId(params);
     const accountId = readStringParam(params, "accountId");
-    let messageId = readStringParam(params, "messageId", { required: false });
+    let messageId = readStringParam(params, "target", { required: false }) 
+      ?? readStringParam(params, "messageId", { required: false })
+      ?? readStringParam(params, "message_id", { required: false });
+    const emoji = readStringParam(params, "emoji", { required: false });
+    const emojisParam = readStringParam(params, "emojis", { required: false });
     
-    if (!messageId && action === "react") {
-      const messages = await readMatrixMessages(roomId, 1, cfg as CoreConfig);
+    console.log("[REACT-DEBUG] === REACTION CALL ===");
+    console.log("[REACT-DEBUG] action:", action, "roomId:", roomId, "target:", messageId, "accountId:", accountId);
+    console.log("[REACT-DEBUG] emoji param:", emoji, "emojis param:", emojisParam);
+    
+    const isPlaceholderId = messageId && (
+      messageId.startsWith("$INPUT") || 
+      messageId.startsWith("$LATEST") ||
+      messageId.startsWith("Queued") ||
+      messageId.startsWith("$LA:") ||  // Eden/platform message IDs
+      messageId.startsWith("$") && !messageId.includes(":nettsi") // Any $ prefix without valid Matrix room
+    );
+    if ((!messageId || messageId.trim() === "" || isPlaceholderId) && reactionActions.has(action)) {
+      console.log("[REACT-DEBUG] target is placeholder or empty, fetching last message, roomId:", roomId, "accountId:", accountId);
+      const result = await readMatrixMessages(roomId, { 
+        limit: 5, 
+        accountId: accountId ?? undefined,
+      });
+      const messages = result?.messages;
+      console.log("[REACT-DEBUG] Got messages:", messages?.map(m => ({ eventId: m.eventId, body: m.body?.substring(0, 30) })));
       if (messages && messages.length > 0) {
         messageId = messages[0].eventId;
+        console.log("[REACT-DEBUG] Set messageId to:", messageId);
       }
       if (!messageId) {
         throw new Error("Could not find a message to react to. Please provide a messageId.");
@@ -66,14 +88,41 @@ export async function handleMatrixAction(
       const { emoji, remove, isEmpty } = readReactionParams(params, {
         removeErrorMessage: "Emoji is required to remove a Matrix reaction.",
       });
+      
+      const emojisParam = readStringParam(params, "emojis", { required: false });
+      let emojis: string[] = [];
+      
+      if (emojisParam) {
+        emojis = emojisParam.split(",").map(e => e.trim()).filter(e => e);
+      } else if (emoji) {
+        if (emoji.includes(",")) {
+          emojis = emoji.split(",").map(e => e.trim()).filter(e => e);
+        } else {
+          emojis = [emoji];
+        }
+      }
+      
+      console.log("[REACT-DEBUG] Reacting with emojis:", emojis, "to messageId:", messageId, "accountId:", accountId);
+      
       if (remove || isEmpty) {
         const result = await removeMatrixReactions(roomId, messageId!, {
           emoji: remove ? emoji : undefined,
         });
         return jsonResult({ ok: true, removed: result.removed });
       }
-      await reactMatrixMessage(roomId, messageId!, emoji, accountId ?? undefined);
-      return jsonResult({ ok: true, added: emoji });
+      
+      if (emojis.length === 0) {
+        throw new Error("Emoji is required to add a Matrix reaction.");
+      }
+      
+      const added: string[] = [];
+      for (const e of emojis) {
+        await reactMatrixMessage(roomId, messageId!, e, accountId ?? undefined);
+        added.push(e);
+      }
+      
+      console.log("[REACT-DEBUG] Successfully added reactions:", added);
+      return jsonResult({ ok: true, added });
     }
     const reactions = await listMatrixReactions(roomId, messageId!);
     return jsonResult({ ok: true, reactions });

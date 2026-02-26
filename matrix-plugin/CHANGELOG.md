@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026.2.15
+
+### Features
+
+- **Multiple Emoji Reactions**: Added support for adding multiple emoji reactions in a single call using comma-separated values.
+
+- **Auto-fetch Last Message**: When no valid messageId is provided, the tool automatically fetches the last message from the conversation.
+
+- **Placeholder Detection**: Automatically detects and handles placeholder message IDs from various platforms:
+  - `$INPUT_MESSAGE_ID`, `$LATEST` - Framework placeholders
+  - `Queued #1` - Queued message references
+  - `$LA:EDEN:19` - Eden/platform message IDs (cross-platform)
+  - Any `$` prefixed ID without valid Matrix room context
+
+- **Multi-param Support**: The react tool now accepts message ID from multiple parameter names: `target`, `messageId`, `message_id`
+
+### Technical Changes
+
+- Updated `tool-actions.ts` to read from multiple param names
+- Added placeholder detection logic for cross-platform message IDs
+- Added support for comma-separated emojis in both `emoji` and `emojis` parameters
+
 ## 2026.2.14
 
 ### Features

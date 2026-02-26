@@ -197,6 +197,33 @@ react with 😍
 
 If no `messageId` is provided, the tool will automatically read the last message from the conversation and react to it. This makes it much easier for agents to react to messages without needing to know the specific event ID.
 
+### Multiple Emojis
+
+The react tool supports adding multiple emojis in a single call:
+
+**Using emoji parameter (comma-separated):**
+```
+react with 😈,🍎,💕
+```
+
+**Using emojis parameter:**
+```
+react with emojis: "😈,🍎,💕"
+```
+
+Both methods will add three separate reactions to the message.
+
+### Placeholder Detection
+
+The tool automatically detects and handles placeholder message IDs from various platforms:
+- `$INPUT_MESSAGE_ID` - Input placeholder
+- `$LATEST` - Latest message placeholder
+- `Queued #1` - Queued message references
+- `$LA:EDEN:19` - Eden/platform message IDs (cross-platform)
+- Any `$` prefixed ID without valid Matrix room context
+
+When these are detected, the tool automatically fetches the last message from the current Matrix room instead.
+
 ## Security Considerations
 
 ### Path Allowlisting

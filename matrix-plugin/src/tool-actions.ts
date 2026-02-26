@@ -49,6 +49,7 @@ export async function handleMatrixAction(
       throw new Error("Matrix reactions are disabled.");
     }
     const roomId = readRoomId(params);
+    const accountId = readStringParam(params, "accountId");
     let messageId = readStringParam(params, "messageId", { required: false });
     
     if (!messageId && action === "react") {
@@ -71,7 +72,7 @@ export async function handleMatrixAction(
         });
         return jsonResult({ ok: true, removed: result.removed });
       }
-      await reactMatrixMessage(roomId, messageId!, emoji);
+      await reactMatrixMessage(roomId, messageId!, emoji, accountId ?? undefined);
       return jsonResult({ ok: true, added: emoji });
     }
     const reactions = await listMatrixReactions(roomId, messageId!);

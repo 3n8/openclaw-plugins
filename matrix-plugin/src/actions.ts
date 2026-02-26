@@ -110,6 +110,7 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
       const messageId = readStringParam(params, "messageId", { required: false });
       const emoji = readStringParam(params, "emoji", { allowEmpty: true });
       const remove = typeof params.remove === "boolean" ? params.remove : undefined;
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "react",
@@ -117,6 +118,7 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
           messageId: messageId ?? undefined,
           emoji,
           remove,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -125,12 +127,14 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     if (action === "reactions") {
       const messageId = readStringParam(params, "messageId", { required: false });
       const limit = readNumberParam(params, "limit", { integer: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "reactions",
           roomId: resolveRoomId(),
           messageId: messageId ?? undefined,
           limit,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -138,6 +142,7 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
 
     if (action === "read") {
       const limit = readNumberParam(params, "limit", { integer: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "readMessages",
@@ -145,6 +150,7 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
           limit,
           before: readStringParam(params, "before"),
           after: readStringParam(params, "after"),
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -153,12 +159,14 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
     if (action === "edit") {
       const messageId = readStringParam(params, "messageId", { required: true });
       const content = readStringParam(params, "message", { required: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "editMessage",
           roomId: resolveRoomId(),
           messageId,
           content,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -166,11 +174,13 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
 
     if (action === "delete") {
       const messageId = readStringParam(params, "messageId", { required: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "deleteMessage",
           roomId: resolveRoomId(),
           messageId,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -181,12 +191,14 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
         action === "list-pins"
           ? undefined
           : readStringParam(params, "messageId", { required: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action:
             action === "pin" ? "pinMessage" : action === "unpin" ? "unpinMessage" : "listPins",
           roomId: resolveRoomId(),
           messageId,
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
@@ -194,21 +206,25 @@ export const matrixMessageActions: ChannelMessageActionAdapter = {
 
     if (action === "member-info") {
       const userId = readStringParam(params, "userId", { required: true });
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "memberInfo",
           userId,
           roomId: readStringParam(params, "roomId") ?? readStringParam(params, "channelId"),
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
     }
 
     if (action === "channel-info") {
+      const resolvedAccountId = effectiveAccountId();
       return await handleMatrixAction(
         {
           action: "channelInfo",
           roomId: resolveRoomId(),
+          accountId: resolvedAccountId,
         },
         cfg as CoreConfig,
       );
